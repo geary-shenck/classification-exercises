@@ -1,15 +1,15 @@
 
 from sklearn.model_selection import train_test_split
 import pandas as pd
-import numpy as pd
+import numpy as np
 import acquire
 
-def split_function(df):
+def split_function(df,target):
     ''' 
     splits a dataframe and returns train, test, and validate dataframes
     '''
-    train,test = train_test_split(df,test_size= .2, random_state=123)
-    train,validate = train_test_split(train,test_size= .25, random_state=123)
+    train,test = train_test_split(df,test_size= .2, random_state=123,stratify = df[target])
+    train,validate = train_test_split(train,test_size= .25, random_state=123,stratify = train[target])
 
     print(f"prepared df shape: {df.shape}")
     print(f"train shape: {train.shape}")
@@ -54,8 +54,9 @@ def prep_titanic():
 def prep_telco():
     ''' 
     acquires telco using acquire, 
-    cleans a little, 
-    makes a dummy of all cats
+    cleans a little,
+    encodes yes/no
+    makes a dummy of cats
     concats the dummy to the cleaned
     returns the result
     '''
@@ -63,7 +64,25 @@ def prep_telco():
     telco_churn_df.drop(columns=["contract_type_id","internet_service_type_id","payment_type_id"],inplace=True)
     telco_churn_df["gender_encoded"] = telco_churn_df.gender.map({"Female":1,"Male":0})
     telco_churn_df["partner_encoded"] = telco_churn_df.partner.map({"Yes":1,"No":0})
-    dummy_df = pd.get_dummies(telco_churn_df,drop_first=False)
+
+    telco_churn_df['dependents_encoded'] = telco_churn_df.dependents.map({'Yes': 1, 'No': 0})
+    telco_churn_df['phone_service_encoded'] = telco_churn_df.phone_service.map({'Yes': 1, 'No': 0})
+    telco_churn_df['paperless_billing_encoded'] = telco_churn_df.paperless_billing.map({'Yes': 1, 'No': 0})
+    telco_churn_df['churn_encoded'] = telco_churn_df.churn.map({'Yes': 1, 'No': 0})
+
+    dummy_df = pd.get_dummies(telco_churn_df[[
+                            'multiple_lines',
+                            'online_security',
+                            'online_backup',
+                            'device_protection',
+                            'tech_support',
+                            'streaming_tv',
+                            'streaming_movies',
+                            'contract_type',
+                            'internet_service_type',
+                            'payment_type'
+                            ]],
+                            drop_first=True)
     df = pd.concat([telco_churn_df,dummy_df],axis=1)
     df.head()
 ## will update to match class
